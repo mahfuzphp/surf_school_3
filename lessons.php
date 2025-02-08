@@ -104,10 +104,11 @@ $lessons = $stmt->fetchAll();
 </section>
 
 <style>
+    /* Enhanced Hero Section */
     .hero-section-small {
-        height: 40vh;
-        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-            url('/assets/images/lesson.jpeg') center/cover;
+        height: 50vh;
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+            url('/assets/images/lesson.jpeg') center/cover fixed;
         position: relative;
         display: flex;
         align-items: center;
@@ -115,56 +116,204 @@ $lessons = $stmt->fetchAll();
         color: white;
         margin-top: -70px;
         padding-top: 70px;
+        overflow: hidden;
     }
 
+    .hero-section-small::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-content h1 {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        animation: fadeInDown 1s ease;
+    }
+
+    .hero-content p {
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        animation: fadeInUp 1s ease;
+    }
+
+    /* Enhanced Card Styling */
     .lesson-image {
-        height: 200px;
+        height: 250px;
         object-fit: cover;
+        transition: transform 0.5s ease;
     }
 
     .hover-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        border: none;
+        overflow: hidden;
     }
 
     .hover-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .hover-card:hover .lesson-image {
+        transform: scale(1.05);
     }
 
     .lesson-details {
         font-size: 0.9rem;
+        padding: 0.5rem 0;
+    }
+
+    .lesson-details i {
+        width: 20px;
+        height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        border-radius: 50%;
+        margin-right: 0.75rem !important;
     }
 
     .badge {
-        padding: 0.5em 1em;
+        padding: 0.6em 1.2em;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        border-radius: 30px;
     }
 
-    /* Level filter buttons styling */
+    /* Enhanced Filter Buttons */
+    .btn-group {
+        background: white;
+        padding: 0.5rem;
+        border-radius: 35px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    }
+
     .btn-group .btn {
-        padding: 0.5rem 1.5rem;
+        padding: 0.7rem 1.8rem;
         border-radius: 30px !important;
         margin: 0 0.25rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        border-width: 2px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-group .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
     .btn-group .btn.active {
-        background-color: var(--bs-primary);
+        background: linear-gradient(45deg, var(--bs-primary), #00a5b9);
+        border-color: transparent;
         color: white;
+        box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.3);
     }
 
+    /* Card Content Styling */
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .card-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .text-primary {
+        color: var(--bs-primary) !important;
+    }
+
+    .btn-primary,
+    .btn-outline-primary {
+        padding: 0.6rem 1.5rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive Adjustments */
     @media (max-width: 768px) {
         .hero-section-small {
-            height: 30vh;
+            height: 40vh;
         }
 
         .btn-group {
             flex-wrap: wrap;
             gap: 0.5rem;
+            padding: 0.75rem;
         }
 
         .btn-group .btn {
             flex: 1 1 auto;
-            min-width: 120px;
+            min-width: 140px;
+            font-size: 0.9rem;
+            padding: 0.6rem 1rem;
         }
+
+        .lesson-image {
+            height: 200px;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+    }
+
+    /* Add smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--bs-primary);
+        border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #0056b3;
     }
 </style>
 

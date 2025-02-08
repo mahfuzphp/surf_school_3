@@ -1,0 +1,59 @@
+/* Privacy Policy Styles */
+.privacy-card {
+    border-radius: 20px;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #0a4c95, #00a5b9) !important;
+}
+
+.privacy-section {
+    transition: all 0.3s ease;
+    border-radius: 15px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: white;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Back to top button */
+.back-to-top {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    display: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    z-index: 1000;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.back-to-top:hover {
+    opacity: 1;
+    transform: translateY(-3px);
+}
+
+/* Print styles */
+@media print {
+    .navbar,
+    .breadcrumb,
+    .btn,
+    .back-to-top,
+    footer {
+        display: none !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    .privacy-section {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+} 

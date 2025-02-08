@@ -1,4 +1,11 @@
 <?php
+// Start session before any output
+session_start();
+require_once 'includes/functions.php';
+
+// Set page title
+$pageTitle = "Privacy Policy - Surf School";
+
 include 'includes/header.php';
 include 'includes/navbar.php';
 ?>
@@ -6,10 +13,13 @@ include 'includes/navbar.php';
 <div class="container mt-5 pt-4">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-primary text-white p-4">
-                    <h1 class="h2 mb-0">Privacy Policy</h1>
+            <div class="card shadow-lg border-0 privacy-card">
+                <div class="card-header bg-gradient-primary text-white p-5 text-center">
+                    <i class="fas fa-shield-alt fa-3x mb-3"></i>
+                    <h1 class="h2 mb-2">Privacy Policy</h1>
+                    <p class="mb-0 text-white-50">Last updated: <?php echo date('F j, Y'); ?></p>
                 </div>
+
                 <div class="card-body p-4 p-lg-5">
                     <div class="privacy-section mb-5">
                         <h2 class="h4 text-primary mb-4">1. Introduction</h2>
@@ -157,64 +167,57 @@ include 'includes/navbar.php';
                             </div>
                         </div>
                     </div>
-
-                    <div class="mt-5 pt-4 border-top">
-                        <p class="text-muted small text-center mb-0">
-                            <i class="far fa-clock me-1"></i>
-                            Last updated: <?php echo date('F j, Y'); ?>
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-    .privacy-section {
-        transition: all 0.3s ease;
-    }
+<!-- Move styles to a separate CSS file -->
+<link rel="stylesheet" href="/assets/css/privacy-policy.css">
 
-    .privacy-section:hover {
-        transform: translateY(-5px);
-    }
+<!-- Add breadcrumb navigation -->
+<nav aria-label="breadcrumb" class="container mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Privacy Policy</li>
+    </ol>
+</nav>
 
-    .list-group-item {
-        border: none;
-        padding: 0.75rem 0;
-    }
+<!-- Add print functionality -->
+<div class="container mb-4">
+    <button onclick="window.print()" class="btn btn-outline-primary">
+        <i class="fas fa-print me-2"></i>Print Policy
+    </button>
+</div>
 
-    .contact-card {
-        transition: all 0.3s ease;
-    }
+<!-- Add back to top button -->
+<button id="backToTop" class="btn btn-primary back-to-top" title="Back to top">
+    <i class="fas fa-arrow-up"></i>
+</button>
 
-    .contact-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-    }
+<!-- Add JavaScript for back to top functionality -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const backToTopButton = document.getElementById('backToTop');
 
-    .bg-light {
-        background-color: #f8f9fa !important;
-    }
+        // Show/hide button based on scroll position
+        window.onscroll = function() {
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                backToTopButton.style.display = "block";
+            } else {
+                backToTopButton.style.display = "none";
+            }
+        };
 
-    .card {
-        border-radius: 15px;
-        overflow: hidden;
-    }
-
-    .card-header {
-        border-bottom: none;
-    }
-
-    @media (max-width: 768px) {
-        .card-body {
-            padding: 1.5rem !important;
-        }
-
-        .contact-card {
-            margin-bottom: 1rem;
-        }
-    }
-</style>
+        // Smooth scroll to top
+        backToTopButton.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    });
+</script>
 
 <?php include 'includes/footer.php'; ?>
