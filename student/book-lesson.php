@@ -1,13 +1,28 @@
 <?php
-include '../includes/header.php';
-include '../includes/navbar.php';
-include '../includes/functions.php';
+session_start();
+require_once '../includes/functions.php';
+require_once '../config/database.php';
+require_once '../includes/get_weather.php';
 
 checkLogin();
 
+// Check if user is a student
+if ($_SESSION['user_type'] !== 'student') {
+    $_SESSION['error_message'] = "Access denied. Student privileges required.";
+    header("Location: /login.php");
+    exit();
+}
+
+// Get the forecast data
+$forecast = fetchMonthlyForecast();
+
 // Get lesson details
 $lesson_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-include '../config/database.php';
+if (!$lesson_id) {
+    $_SESSION['error_message'] = "Invalid lesson ID";
+    header("Location: /lessons.php");
+    exit();
+}
 
 $stmt = $pdo->prepare("SELECT * FROM lessons WHERE id = ?");
 $stmt->execute([$lesson_id]);
@@ -17,20 +32,31 @@ if (!$lesson) {
     header('Location: ../lessons.php');
     exit();
 }
+
+include '../includes/header.php';
+include '../includes/navbar.php';
 ?>
 
-<div class="container mt-5 pt-5">
-    <div class="row">
+<div class="container mt-5 pt-4">
+    <!-- Display the forecast widget -->
+    <?php echo getMonthlyForecastDisplay($forecast); ?>
+
+    <div class="row justify-content-between">
         <div class="col-md-6">
             <h2><?php echo htmlspecialchars($lesson['title']); ?></h2>
             <p class="lead"><?php echo htmlspecialchars($lesson['description']); ?></p>
             <p><strong>Price: $<?php echo htmlspecialchars($lesson['price']); ?></strong></p>
+            <div class="lesson-details mt-4">
+                <div class="badge bg-primary me-2">Level: <?php echo htmlspecialchars($lesson['level']); ?></div>
+                <div class="badge bg-info me-2">Duration: <?php echo htmlspecialchars($lesson['duration']); ?> mins</div>
+                <div class="badge bg-success">Max Students: <?php echo htmlspecialchars($lesson['max_students']); ?></div>
+            </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="card">
+        <div class="col-md-5">
+            <div class="card shadow-sm">
                 <div class="card-body">
-                    <h3 class="card-title">Book This Lesson</h3>
+                    <h3 class="card-title mb-4">Book This Lesson</h3>
                     <form action="process-booking.php" method="POST">
                         <input type="hidden" name="lesson_id" value="<?php echo $lesson_id; ?>">
 

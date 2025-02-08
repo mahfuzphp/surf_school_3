@@ -210,10 +210,13 @@ function getWeatherFromCache($location)
     global $pdo;
 
     try {
-        $stmt = $pdo->prepare("SELECT weather_data FROM weather_cache 
-                              WHERE location = :location 
-                              AND last_updated > DATE_SUB(NOW(), INTERVAL 1 HOUR)");
-        $stmt->execute(['location' => $location]);
+        $stmt = $pdo->prepare("
+            SELECT weather_data 
+            FROM weather_cache 
+            WHERE location = :location 
+            AND last_updated > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+        ");
+        $stmt->execute(['location' => 'weather_' . $location]);
 
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             return json_decode($row['weather_data'], true);
@@ -230,14 +233,16 @@ function saveWeatherToCache($location, $data)
     global $pdo;
 
     try {
-        $stmt = $pdo->prepare("INSERT INTO weather_cache (location, weather_data) 
-                              VALUES (:location, :weather_data)
-                              ON DUPLICATE KEY UPDATE 
-                              weather_data = VALUES(weather_data),
-                              last_updated = CURRENT_TIMESTAMP");
+        $stmt = $pdo->prepare("
+            INSERT INTO weather_cache (location, weather_data) 
+            VALUES (:location, :weather_data)
+            ON DUPLICATE KEY UPDATE 
+            weather_data = VALUES(weather_data),
+            last_updated = CURRENT_TIMESTAMP
+        ");
 
         $stmt->execute([
-            'location' => $location,
+            'location' => 'weather_' . $location,
             'weather_data' => json_encode($data)
         ]);
     } catch (PDOException $e) {
@@ -263,4 +268,297 @@ function getSampleWeatherData()
             ],
         ],
     ];
+}
+
+function getMonthlyForecastDisplay($forecast)
+{
+    // Add caching for the HTML display
+    $cache_key = 'forecast_display_' . md5(json_encode($forecast));
+    $cached_html = getDisplayFromCache($cache_key);
+
+    if ($cached_html !== false) {
+        return $cached_html;
+    }
+
+    if (!$forecast) return '';
+
+    ob_start();
+?>
+    <div class="forecast-widget mb-4">
+        <div class="card border-0 shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Surf Conditions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Wave Height</th>
+                                <th>Wind Speed</th>
+                                <th>Temperature</th>
+                                <th>Conditions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($forecast['daily'] as $day): ?>
+                                <tr>
+                                    <td><?php echo date('D, M j', strtotime($day['date'])); ?></td>
+                                    <td>
+                                        <i class="fas fa-wave-square text-primary me-2"></i>
+                                        <?php echo $day['wave_height']; ?>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-wind text-info me-2"></i>
+                                        <?php echo $day['wind_speed']; ?>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-temperature-high text-danger me-2"></i>
+                                        <?php echo $day['temperature']; ?>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            <?php echo $day['condition']; ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3 text-end">
+                    <small class="text-muted">
+                        <i class="far fa-clock me-1"></i>
+                        Last updated: <?php echo $forecast['last_updated']; ?>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .forecast-widget .table th {
+            font-weight: 600;
+            border-top: none;
+        }
+
+        .forecast-widget .table td {
+            vertical-align: middle;
+        }
+
+        .forecast-widget .badge {
+            font-weight: 500;
+            padding: 0.5em 1em;
+        }
+
+        @media (max-width: 768px) {
+            .forecast-widget .table {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+<?php
+    $html = ob_get_clean();
+
+    // Cache the generated HTML
+    saveDisplayToCache($cache_key, $html);
+
+    return $html;
+}
+
+/**
+ * Get cached display HTML
+ */
+function getDisplayFromCache($cache_key)
+{
+    global $pdo;
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT weather_data as display_html
+            FROM weather_cache 
+            WHERE location = ? 
+            AND last_updated > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+        ");
+        $stmt->execute(['display_' . $cache_key]);
+
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            return $row['display_html'];
+        }
+    } catch (PDOException $e) {
+        error_log("Display cache fetch error: " . $e->getMessage());
+    }
+
+    return false;
+}
+
+/**
+ * Save display HTML to cache
+ */
+function saveDisplayToCache($cache_key, $html)
+{
+    global $pdo;
+
+    try {
+        // First, clean old cache entries
+        $stmt = $pdo->prepare("
+            DELETE FROM weather_cache 
+            WHERE last_updated < DATE_SUB(NOW(), INTERVAL 1 DAY)
+            AND location LIKE 'display_%'
+        ");
+        $stmt->execute();
+
+        // Then insert new cache entry with 'display_' prefix
+        $stmt = $pdo->prepare("
+            INSERT INTO weather_cache (location, weather_data, last_updated) 
+            VALUES (?, ?, NOW())
+            ON DUPLICATE KEY UPDATE 
+            weather_data = VALUES(weather_data),
+            last_updated = NOW()
+        ");        //dd($stmt);
+        $stmt->execute(['display_' . $cache_key, $html]);
+    } catch (PDOException $e) {
+        error_log("Display cache save error: " . $e->getMessage());
+    }
+}
+
+function fetchMonthlyForecast($location = 'Bondi Beach')
+{
+    // Create a cache key that includes the date
+    $cache_key = 'forecast_' . $location . '_' . date('Y-m-d');
+
+    // Try to get cached forecast first
+    $cachedData = getForecastFromCache($cache_key);
+    if ($cachedData) {
+        return $cachedData;
+    }
+
+    // If no cached data, fetch from API
+    $latitude = -33.8915; // Bondi Beach, Australia
+    $longitude = 151.2767;
+    $url = "https://marine-api.open-meteo.com/v1/marine?latitude={$latitude}&longitude={$longitude}"
+        . "&daily=wave_height,wind_speed_10m_max,temperature_2m_max&timezone=auto";
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+
+    if (curl_errno($ch)) {
+        curl_close($ch);
+        return getSampleMonthlyForecast();
+    }
+
+    curl_close($ch);
+    $data = json_decode($response, true);
+
+    if (!isset($data['daily'])) {
+        return getSampleMonthlyForecast();
+    }
+
+    // Format the data
+    $forecast = [
+        'location' => [
+            'name' => $location,
+            'latitude' => $latitude,
+            'longitude' => $longitude
+        ],
+        'last_updated' => date('Y-m-d H:i'),
+        'daily' => []
+    ];
+
+    // Process each day's data
+    for ($i = 0; $i < count($data['daily']['time']); $i++) {
+        $forecast['daily'][] = [
+            'date' => $data['daily']['time'][$i],
+            'wave_height' => $data['daily']['wave_height'][$i] . ' m',
+            'wind_speed' => $data['daily']['wind_speed_10m_max'][$i] . ' km/h',
+            'temperature' => $data['daily']['temperature_2m_max'][$i] . ' °C',
+            'condition' => getConditionText(
+                $data['daily']['wave_height'][$i],
+                $data['daily']['wind_speed_10m_max'][$i]
+            )
+        ];
+    }
+
+    // Save to cache with the date-specific key
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO weather_cache (location, weather_data, last_updated) 
+            VALUES (:location, :weather_data, NOW())
+            ON DUPLICATE KEY UPDATE 
+            weather_data = VALUES(weather_data),
+            last_updated = NOW()
+        ");
+
+        $stmt->execute([
+            'location' => $cache_key,
+            'weather_data' => json_encode($forecast)
+        ]);
+    } catch (PDOException $e) {
+        error_log("Cache save error: " . $e->getMessage());
+    }
+
+    return $forecast;
+}
+
+function getConditionText($wave_height, $wind_speed)
+{
+    if ($wave_height < 0.5) return 'Calm';
+    if ($wave_height < 1.0) return 'Good for Beginners';
+    if ($wave_height < 2.0) return 'Ideal';
+    if ($wave_height < 3.0) return 'Advanced';
+    return 'Extreme';
+}
+
+function getForecastFromCache($cache_key)
+{
+    global $pdo;
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT weather_data 
+            FROM weather_cache 
+            WHERE location = :location 
+            AND last_updated > DATE_SUB(NOW(), INTERVAL 6 HOUR)
+            AND weather_data LIKE '%daily%'
+        ");
+        $stmt->execute(['location' => $cache_key]);
+
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            return json_decode($row['weather_data'], true);
+        }
+    } catch (PDOException $e) {
+        error_log("Database error: " . $e->getMessage());
+    }
+
+    return null;
+}
+
+function getSampleMonthlyForecast()
+{
+    $forecast = [
+        'location' => [
+            'name' => 'Bondi Beach',
+            'latitude' => -33.8915,
+            'longitude' => 151.2767
+        ],
+        'last_updated' => date('Y-m-d H:i'),
+        'daily' => []
+    ];
+
+    // Generate 7 days of sample data
+    for ($i = 0; $i < 7; $i++) {
+        $date = date('Y-m-d', strtotime("+$i days"));
+        $forecast['daily'][] = [
+            'date' => $date,
+            'wave_height' => rand(5, 25) / 10 . ' m',
+            'wind_speed' => rand(5, 30) . ' km/h',
+            'temperature' => rand(20, 30) . ' °C',
+            'condition' => ['Calm', 'Good for Beginners', 'Ideal', 'Advanced'][rand(0, 3)]
+        ];
+    }
+
+    return $forecast;
 }
