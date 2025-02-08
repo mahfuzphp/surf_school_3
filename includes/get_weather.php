@@ -4,6 +4,11 @@ if (!defined('BASE_PATH')) {
 }
 
 require_once BASE_PATH . '/config/database.php';
+require_once BASE_PATH . '/includes/functions.php';
+require_once BASE_PATH . '/includes/OpenMeteoClient.php';
+require_once BASE_PATH . '/includes/OpenMeteoSurfClient.php';
+
+
 
 function getWeatherDisplay($weather)
 {
@@ -151,58 +156,25 @@ function fetchWeatherData($location = 'Bondi Beach')
     if ($cachedData) {
         return $cachedData;
     }
-
-    // If no cached data, fetch from API
-    $latitude = -33.8915; // Bondi Beach, Australia
+    // Bondi Beach, Australia
+    $latitude = -33.8915;
     $longitude = 151.2767;
-    $url = "https://marine-api.open-meteo.com/v1/marine?latitude={$latitude}&longitude={$longitude}&hourly=wave_height,wind_speed,air_temperature";
+    // If no cached data, fetch from API
 
-    // Initialize a cURL session
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    // $client = new OpenMeteoClient();
+    // $clientSurf = new OpenMeteoSurfClient();
+    // $weatherData = $client->getCurrentConditions($location, $latitude, $longitude);
 
-    // Execute the cURL request
-    $response = curl_exec($ch);
 
-    // Check for cURL errors
-    if (curl_errno($ch)) {
-        curl_close($ch);
-        return getSampleWeatherData(); // Return sample data if API call fails
-    }
+    $client = new OpenMeteoSurfClient();
+    $surfReport = $client->getSurfReport('Bondi Beach', -33.8915, 151.2767);
 
-    // Close the cURL session
-    curl_close($ch);
-
-    // Decode the JSON response
-    $data = json_decode($response, true);
-
-    // Check if the API returned valid data
-    if (!isset($data['hourly'])) {
-        $data = getSampleWeatherData();
-    } else {
-        $data = [
-            'location' => [
-                'name' => 'Bondi Beach',
-                'latitude' => $latitude,
-                'longitude' => $longitude,
-                'localtime' => date('Y-m-d H:i'),
-            ],
-            'current' => [
-                'wave_height' => $data['hourly']['wave_height'][0] . " m",
-                'wind_speed' => $data['hourly']['wind_speed'][0] . " km/h",
-                'air_temperature' => $data['hourly']['air_temperature'][0] . " °C",
-                'condition' => [
-                    'text' => 'Data from Open-Meteo',
-                ],
-            ],
-        ];
-    }
 
     // Save the new data to cache
-    saveWeatherToCache($location, $data);
+    saveWeatherToCache($location, $surfReport);
 
-    return $data;
+
+    return $surfReport;
 }
 
 function getWeatherFromCache($location)
@@ -250,25 +222,6 @@ function saveWeatherToCache($location, $data)
     }
 }
 
-function getSampleWeatherData()
-{
-    return [
-        'location' => [
-            'name' => 'Bondi Beach',
-            'latitude' => -33.8915,
-            'longitude' => 151.2767,
-            'localtime' => date('Y-m-d H:i'),
-        ],
-        'current' => [
-            'wave_height' => '1.2 m',
-            'wind_speed' => '15 km/h',
-            'air_temperature' => '26 °C',
-            'condition' => [
-                'text' => 'Sunny',
-            ],
-        ],
-    ];
-}
 
 function getMonthlyForecastDisplay($forecast)
 {
@@ -281,7 +234,6 @@ function getMonthlyForecastDisplay($forecast)
     }
 
     if (!$forecast) return '';
-
     ob_start();
 ?>
     <div class="forecast-widget mb-4">
@@ -425,6 +377,9 @@ function saveDisplayToCache($cache_key, $html)
 
 function fetchMonthlyForecast($location = 'Bondi Beach')
 {
+
+
+    global $pdo;
     // Create a cache key that includes the date
     $cache_key = 'forecast_' . $location . '_' . date('Y-m-d');
 
@@ -437,50 +392,11 @@ function fetchMonthlyForecast($location = 'Bondi Beach')
     // If no cached data, fetch from API
     $latitude = -33.8915; // Bondi Beach, Australia
     $longitude = 151.2767;
-    $url = "https://marine-api.open-meteo.com/v1/marine?latitude={$latitude}&longitude={$longitude}"
-        . "&daily=wave_height,wind_speed_10m_max,temperature_2m_max&timezone=auto";
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
+    $client = new OpenMeteoSurfClient();
+    $forecast = $client->getSevenDayForecast($location, $latitude, $longitude);
 
-    if (curl_errno($ch)) {
-        curl_close($ch);
-        return getSampleMonthlyForecast();
-    }
 
-    curl_close($ch);
-    $data = json_decode($response, true);
-
-    if (!isset($data['daily'])) {
-        return getSampleMonthlyForecast();
-    }
-
-    // Format the data
-    $forecast = [
-        'location' => [
-            'name' => $location,
-            'latitude' => $latitude,
-            'longitude' => $longitude
-        ],
-        'last_updated' => date('Y-m-d H:i'),
-        'daily' => []
-    ];
-
-    // Process each day's data
-    for ($i = 0; $i < count($data['daily']['time']); $i++) {
-        $forecast['daily'][] = [
-            'date' => $data['daily']['time'][$i],
-            'wave_height' => $data['daily']['wave_height'][$i] . ' m',
-            'wind_speed' => $data['daily']['wind_speed_10m_max'][$i] . ' km/h',
-            'temperature' => $data['daily']['temperature_2m_max'][$i] . ' °C',
-            'condition' => getConditionText(
-                $data['daily']['wave_height'][$i],
-                $data['daily']['wind_speed_10m_max'][$i]
-            )
-        ];
-    }
 
     // Save to cache with the date-specific key
     try {
@@ -501,15 +417,6 @@ function fetchMonthlyForecast($location = 'Bondi Beach')
     }
 
     return $forecast;
-}
-
-function getConditionText($wave_height, $wind_speed)
-{
-    if ($wave_height < 0.5) return 'Calm';
-    if ($wave_height < 1.0) return 'Good for Beginners';
-    if ($wave_height < 2.0) return 'Ideal';
-    if ($wave_height < 3.0) return 'Advanced';
-    return 'Extreme';
 }
 
 function getForecastFromCache($cache_key)
@@ -534,31 +441,4 @@ function getForecastFromCache($cache_key)
     }
 
     return null;
-}
-
-function getSampleMonthlyForecast()
-{
-    $forecast = [
-        'location' => [
-            'name' => 'Bondi Beach',
-            'latitude' => -33.8915,
-            'longitude' => 151.2767
-        ],
-        'last_updated' => date('Y-m-d H:i'),
-        'daily' => []
-    ];
-
-    // Generate 7 days of sample data
-    for ($i = 0; $i < 7; $i++) {
-        $date = date('Y-m-d', strtotime("+$i days"));
-        $forecast['daily'][] = [
-            'date' => $date,
-            'wave_height' => rand(5, 25) / 10 . ' m',
-            'wind_speed' => rand(5, 30) . ' km/h',
-            'temperature' => rand(20, 30) . ' °C',
-            'condition' => ['Calm', 'Good for Beginners', 'Ideal', 'Advanced'][rand(0, 3)]
-        ];
-    }
-
-    return $forecast;
 }

@@ -13,8 +13,19 @@ if ($_SESSION['user_type'] !== 'student') {
     exit();
 }
 
-// Get the forecast data
+// Get the forecast data with surf conditions
 $forecast = fetchMonthlyForecast();
+
+// Add surf condition color mapping
+$surfRatingColors = [
+    'Epic' => 'success',
+    'Excellent' => 'primary',
+    'Very Good' => 'info',
+    'Good' => 'secondary',
+    'Fair' => 'warning',
+    'Poor' => 'danger',
+    'Not Suitable' => 'dark'
+];
 
 // Get lesson details
 $lesson_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -38,8 +49,68 @@ include '../includes/navbar.php';
 ?>
 
 <div class="container mt-5 pt-4">
-    <!-- Display the forecast widget -->
-    <?php echo getMonthlyForecastDisplay($forecast); ?>
+    <!-- Display surf forecast with conditions -->
+    <div class="forecast-widget mb-4">
+        <div class="card border-0 shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Surf Forecast</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Wave Height</th>
+                                <th>Wind Speed</th>
+                                <th>Temperature</th>
+                                <!-- <th>Surf Rating</th> -->
+                                <th>Best For</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($forecast['daily'] as $day): ?>
+                                <tr>
+                                    <td><?php echo date('D, M j', strtotime($day['date'])); ?></td>
+                                    <td>
+                                        <i class="fas fa-wave-square text-primary me-2"></i>
+                                        <?php echo $day['wave_height']; ?>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-wind text-info me-2"></i>
+                                        <?php echo $day['wind_speed']; ?>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-temperature-high text-danger me-2"></i>
+                                        <?php echo $day['temperature']; ?>
+                                    </td>
+                                    <!-- <td>
+                                        <?php
+                                        $ratingColor = $surfRatingColors[$day['surf_condition']['rating']] ?? 'secondary';
+                                        ?>
+                                        <span class="badge bg-<?php echo $ratingColor; ?>">
+                                            <?php echo $day['surf_condition']['rating']; ?>
+                                        </span>
+                                    </td> -->
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            <?php echo ucfirst($day['surf_condition']['best_for']); ?> Surfers
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3 text-end">
+                    <small class="text-muted">
+                        <i class="far fa-clock me-1"></i>
+                        Last updated: <?php echo $forecast['last_updated']; ?>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="row justify-content-between">
         <div class="col-md-6">
