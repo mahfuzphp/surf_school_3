@@ -1,11 +1,6 @@
-<?php
-// Start with PHP code, no HTML yet
-if (session_status() === PHP_SESSION_NONE) {
+<?php if (session_status() === PHP_SESSION_NONE) {
     session_start();
-}
-?>
-<!-- Now HTML content can follow -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+} ?><nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
     <div class="container">
         <a class="navbar-brand" href="/index.php">
             <img src="/assets/images/logo.webp" alt="Surf School" height="40">
@@ -25,7 +20,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     <a class="nav-link" href="/about.php">About</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/contact.php">Contact</a>
+                    <a class="nav-link" href="/contact.php">Contact Us</a>
                 </li>
             </ul>
             <ul class="navbar-nav">

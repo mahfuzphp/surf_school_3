@@ -7,18 +7,12 @@ if (session_status() === PHP_SESSION_NONE) {
 function checkLogin()
 {
     if (!isset($_SESSION['user_id'])) {
-        $_SESSION['error_message'] = "Please login to continue.";
+        $_SESSION['error_message'] = "Please log in to access this page.";
         header("Location: /login.php");
         exit();
     }
 }
 
-function uploadProfileImage($file)
-{
-    $target_dir = "uploads/";
-    $target_file = $target_dir . basename($file["name"]);
-    // Add file upload logic here
-}
 
 function dd($data)
 {

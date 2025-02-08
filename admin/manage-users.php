@@ -1,39 +1,80 @@
 <?php
-include '../includes/header.php';
-include '../includes/navbar.php';
-include '../includes/functions.php';
+session_start();
+require_once '../includes/functions.php';
+require_once '../config/database.php';
+
+checkLogin();
 
 // Check if user is admin
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
-    header('Location: ../index.php');
+if ($_SESSION['user_type'] !== 'admin') {
+    $_SESSION['error_message'] = "Access denied. Admin privileges required.";
+    header("Location: /login.php");
     exit();
 }
 
-include '../config/database.php';
-
-// Handle user deletion
+// Handle user deletion (soft delete)
 if (isset($_POST['delete_user'])) {
-    $user_id = (int)$_POST['user_id'];
-    $stmt = $pdo->prepare("DELETE FROM users WHERE id = ? AND id != ?"); // Prevent admin self-deletion
-    $stmt->execute([$user_id, $_SESSION['user_id']]);
+    try {
+        $user_id = (int)$_POST['user_id'];
+
+        // Start transaction
+        $pdo->beginTransaction();
+
+        // Delete related bookings first
+        $stmt = $pdo->prepare("DELETE FROM bookings WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+
+        // Then delete the user
+        $stmt = $pdo->prepare("DELETE FROM users WHERE id = ? AND id != ?");
+        $stmt->execute([$user_id, $_SESSION['user_id']]);
+
+        // Commit transaction
+        $pdo->commit();
+
+        $_SESSION['success_message'] = "User deleted successfully";
+    } catch (PDOException $e) {
+        // Rollback on error
+        $pdo->rollBack();
+        $_SESSION['error_message'] = "Error deleting user: " . $e->getMessage();
+    }
+
+    header("Location: /admin/manage-users.php");
+    exit();
 }
 
-// Get all users
-$stmt = $pdo->query("SELECT * FROM users ORDER BY created_at DESC");
+// Get all active users
+$stmt = $pdo->query("
+    SELECT * FROM users 
+    ORDER BY created_at DESC
+");
 $users = $stmt->fetchAll();
+
+include '../includes/header.php';
+include '../includes/navbar.php';
 ?>
 
 <div class="container mt-5 pt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Manage Users</h2>
-        <a href="add-user.php" class="btn btn-primary">Add New User</a>
+        <a href="add-user.php" class="btn btn-primary">
+            <i class="fas fa-user-plus me-2"></i>Add New User
+        </a>
     </div>
 
-    <?php if (isset($_SESSION['success'])): ?>
+    <?php if (isset($_SESSION['success_message'])): ?>
         <div class="alert alert-success">
             <?php
-            echo $_SESSION['success'];
-            unset($_SESSION['success']);
+            echo $_SESSION['success_message'];
+            unset($_SESSION['success_message']);
+            ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['error_message'])): ?>
+        <div class="alert alert-danger">
+            <?php
+            echo $_SESSION['error_message'];
+            unset($_SESSION['error_message']);
             ?>
         </div>
     <?php endif; ?>

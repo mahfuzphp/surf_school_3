@@ -51,10 +51,12 @@ try {
         AND booking_time = ?
     ");
     $stmt->execute([$lesson_id, $booking_date, $booking_time]);
-    
+
     if ($stmt->fetchColumn() > 0) {
-        handleError("This time slot is already booked. Please choose another time.", 
-                   "/student/book-lesson.php?id=$lesson_id");
+        handleError(
+            "This time slot is already booked. Please choose another time.",
+            "/student/book-lesson.php?id=$lesson_id"
+        );
     }
 
     // Begin transaction
@@ -65,7 +67,7 @@ try {
         INSERT INTO bookings (user_id, lesson_id, booking_date, booking_time, created_at) 
         VALUES (?, ?, ?, ?, NOW())
     ");
-    
+
     $stmt->execute([
         $_SESSION['user_id'],
         $lesson_id,
@@ -77,14 +79,16 @@ try {
     $pdo->commit();
 
     // Redirect with success message
+    $_SESSION['success_message'] = "Booking successful! See you at the lesson.";
     handleSuccess("Lesson booked successfully!", "/student/my-bookings.php");
-
 } catch (PDOException $e) {
     // Rollback transaction on error
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    
-    handleError("An error occurred while processing your booking. Please try again.", 
-                "/student/book-lesson.php?id=$lesson_id");
-} 
+
+    handleError(
+        "An error occurred while processing your booking. Please try again.",
+        "/student/book-lesson.php?id=$lesson_id"
+    );
+}
