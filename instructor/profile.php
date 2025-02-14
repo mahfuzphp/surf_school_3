@@ -137,7 +137,7 @@ include '../includes/navbar.php';
 
                     <?php if (isset($_SESSION['error_message'])): ?>
                         <div class="alert alert-danger">
-                            <?php echo htmlspecialchars($_SESSION['error_message']); ?>
+                            <?php echo htmlspecialchars(implode(', ', $_SESSION['error_message'])); ?>
                         </div>
                     <?php endif; ?>
 
