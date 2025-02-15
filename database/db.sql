@@ -144,3 +144,20 @@ INSERT INTO `weather_cache` (`id`, `location`, `weather_data`, `last_updated`) V
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+
+DROP TABLE IF EXISTS `surf_conditions`;
+CREATE TABLE surf_conditions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    location_name VARCHAR(100) NULL,
+    date_time DATETIME NOT NULL,
+    wave_height DECIMAL(4,2),     -- in meters
+    wind_speed INT,               -- in km/h
+    temperature INT NULL,         -- in celsius
+    beginner_status ENUM('good', 'fair', 'poor', 'dangerous') NULL,
+    intermediate_status ENUM('good', 'fair', 'poor', 'dangerous') NULL,
+    advanced_status ENUM('good', 'fair', 'poor', 'dangerous') NULL,
+    condition_message VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_date_time (date_time),
+    INDEX idx_location (location_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,4 +1,3 @@
-
 <?php if (session_status() === PHP_SESSION_NONE) {
     session_start();
 } ?>
@@ -34,6 +33,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'forecast-management.php') ? 'active' : ''; ?>"
+                        href="/forecast.php">
+                        <i class="fas fa-cloud-sun me-1"></i>Forecast
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/about.php">
                         <i class="fas fa-info-circle me-1"></i>About
                     </a>
@@ -57,6 +62,7 @@
                             <li><a class="dropdown-item" href="/admin/manage-users.php"><i class="fas fa-users me-2"></i>Manage Users</a></li>
                             <li><a class="dropdown-item" href="/admin/manage-lessons.php"><i class="fas fa-chalkboard-teacher me-2"></i>Manage Lessons</a></li>
                             <li><a class="dropdown-item" href="/admin/manage-bookings.php"><i class="fas fa-calendar-check me-2"></i>Manage Bookings</a></li>
+                            <li><a class="dropdown-item" href="/admin/forecast-management.php"><i class="fas fa-cloud-sun me-2"></i>Manage Forecast</a></li>
                         <?php elseif ($_SESSION['user_type'] === 'instructor'): ?>
                             <li><a class="dropdown-item" href="/instructor/dashboard.php"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
                             <li><a class="dropdown-item" href="/instructor/my-lessons.php"><i class="fas fa-book me-2"></i>My Lessons</a></li>

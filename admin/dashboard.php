@@ -88,6 +88,12 @@ include '../includes/navbar.php';
                                 Bookings
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="forecast-management.php">
+                                <i class="fas fa-cloud-sun me-2"></i>
+                                Forecast
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>

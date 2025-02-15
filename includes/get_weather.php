@@ -442,3 +442,68 @@ function getForecastFromCache($cache_key)
 
     return null;
 }
+function calculateSurfConditions($waveHeight, $windSpeed)
+{
+    // Default statuses and message
+    $beginnerStatus = 'poor';
+    $intermediateStatus = 'poor';
+    $advancedStatus = 'poor';
+    $conditionMessage = '';
+
+    // Determine status based on wave height
+    if ($waveHeight >= 0.5 && $waveHeight <= 1.0) {
+        $beginnerStatus = 'good';
+        $intermediateStatus = 'fair';
+        $advancedStatus = 'fair';
+        $conditionMessage = "Small waves, ideal for beginners.";
+    } elseif ($waveHeight > 1.0 && $waveHeight < 1.5) {  // Changed upper bound to 1.5
+        $beginnerStatus = 'fair';
+        $intermediateStatus = 'good';
+        $advancedStatus = 'good';
+        $conditionMessage = "Moderate waves, suitable for intermediate surfers.";
+    } elseif ($waveHeight >= 1.5 && $waveHeight < 2.0) {  // New condition for 1.5-2.0
+        $beginnerStatus = 'poor';      // Beginners shouldn't surf
+        $intermediateStatus = 'good';
+        $advancedStatus = 'good';
+        $conditionMessage = "Moderate to large waves, not suitable for beginners.";
+    } elseif ($waveHeight >= 2.0 && $waveHeight <= 2.5) {  // Changed range for 2.0-2.5
+        $beginnerStatus = 'dangerous';  // Changed to dangerous for beginners
+        $intermediateStatus = 'fair';
+        $advancedStatus = 'good';
+        $conditionMessage = "Large waves, recommended for experienced surfers only. Dangerous for beginners.";
+    } elseif ($waveHeight > 2.5 && $waveHeight <= 3.0) {  // New range for 2.5-3.0
+        $beginnerStatus = 'dangerous';
+        $intermediateStatus = 'poor';   // Changed to poor for intermediate
+        $advancedStatus = 'good';
+        $conditionMessage = "Very large waves, suitable for advanced surfers only.";
+    } elseif ($waveHeight > 3.0) {
+        $beginnerStatus = 'dangerous';
+        $intermediateStatus = 'dangerous';
+        $advancedStatus = 'poor';
+        $conditionMessage = "Waves are too large and dangerous for most surfers.";
+    } else {
+        $conditionMessage = "Waves are too small for surfing.";
+    }
+
+    // Adjust statuses based on wind speed
+    if ($windSpeed >= 25) {
+        $beginnerStatus = 'dangerous';
+        $intermediateStatus = 'dangerous';
+        $advancedStatus = 'dangerous';
+        $conditionMessage = "Strong winds make conditions unsafe for surfing.";
+    } elseif ($windSpeed >= 15 && $windSpeed < 25) {
+        if ($beginnerStatus != 'dangerous') {
+            $beginnerStatus = $beginnerStatus == 'good' ? 'fair' : $beginnerStatus;
+            $intermediateStatus = $intermediateStatus == 'good' ? 'fair' : $intermediateStatus;
+            $advancedStatus = $advancedStatus == 'good' ? 'fair' : $advancedStatus;
+            $conditionMessage .= " Moderate winds may cause choppy conditions.";
+        }
+    }
+
+    return [
+        'beginner_status' => $beginnerStatus,
+        'intermediate_status' => $intermediateStatus,
+        'advanced_status' => $advancedStatus,
+        'condition_message' => $conditionMessage
+    ];
+}

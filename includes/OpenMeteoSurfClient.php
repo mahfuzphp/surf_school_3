@@ -11,7 +11,7 @@ class OpenMeteoSurfClient
     /** @var array */
     private $defaultParams = [
         'timezone' => 'auto',
-        'forecast_days' => 7,
+        'forecast_days' => 14,
         'past_days' => 0,
         'past_hours' => 0,
         'forecast_hours' => 24
@@ -210,6 +210,17 @@ class OpenMeteoSurfClient
 
                 $bestLevel = $this->getBestSuitedLevel($surfConditions);
 
+                // Default values for when no suitable level is found
+                $surfRating = 'Not Suitable';
+                $surfScore = 0;
+                $surfReasons = ['Conditions not suitable for surfing'];
+
+                if ($bestLevel !== 'none' && isset($surfConditions[$bestLevel])) {
+                    $surfRating = $surfConditions[$bestLevel]['rating'];
+                    $surfScore = $surfConditions[$bestLevel]['score'];
+                    $surfReasons = $surfConditions[$bestLevel]['reasons'];
+                }
+
                 $forecast['daily'][] = [
                     'date' => date('D, M j', strtotime($weatherData['daily']['time'][$i])),
                     'conditions' => [
@@ -219,11 +230,11 @@ class OpenMeteoSurfClient
                         'temperature' => sprintf('%.1f °C', $weatherData['daily']['temperature_2m_max'][$i]),
                         'weather' => $this->getConditionText($weatherCode)
                     ],
-                    'surf_rating' => $surfConditions[$bestLevel]['rating'],
+                    'surf_rating' => $surfRating,
                     'best_for' => $bestLevel === 'none' ? 'Not Recommended' : ucfirst($bestLevel) . ' Surfers',
                     'details' => [
-                        'score' => $surfConditions[$bestLevel]['score'],
-                        'reasons' => $surfConditions[$bestLevel]['reasons']
+                        'score' => $surfScore,
+                        'reasons' => $surfReasons
                     ]
                 ];
             }
