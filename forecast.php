@@ -8,8 +8,8 @@ require_once 'includes/get_weather.php';
 $stmt = $pdo->prepare("
     SELECT * FROM surf_conditions 
     WHERE date_time >= CURDATE() 
-    ORDER BY date_time ASC 
-    LIMIT 15
+    AND date_time <= DATE_ADD(CURDATE(), INTERVAL 14 DAY)
+    ORDER BY date_time ASC
 ");
 $stmt->execute();
 $forecast = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -207,7 +207,7 @@ include 'includes/navbar.php';
                 </h2>
                 <span class="text-muted">
                     <i class="fas fa-sync-alt me-1"></i>
-                    Updated <?php echo date('g:i A'); ?>
+                    Updated <?php echo date('g:i A, M j, Y'); ?>
                 </span>
             </div>
             <div class="card border-0 shadow-lg">
@@ -229,7 +229,10 @@ include 'includes/navbar.php';
                                 <?php if ($forecast): ?>
                                     <?php foreach ($forecast as $day): ?>
                                         <tr>
-                                            <td><?php echo date('D, M j', strtotime($day['date_time'])); ?></td>
+                                            <td>
+                                                <strong><?php echo date('D, M j', strtotime($day['date_time'])); ?></strong>
+                                                <div class="small text-muted"><?php echo date('Y', strtotime($day['date_time'])); ?></div>
+                                            </td>
                                             <td>
                                                 <i class="fas fa-wave-square text-primary me-2"></i>
                                                 <?php echo number_format($day['wave_height'], 1); ?>m
@@ -266,6 +269,10 @@ include 'includes/navbar.php';
                                 <?php endif; ?>
                             </tbody>
                         </table>
+                    </div>
+                    <div class="mt-3 text-center text-muted small">
+                        <p><i class="fas fa-info-circle me-1"></i> Forecast data is updated daily. Conditions may change based on weather patterns.</p>
+                        <p>For the most accurate surf conditions, we recommend checking the forecast on the day of your planned surf session.</p>
                     </div>
                 </div>
             </div>

@@ -19,7 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['fetch_api'])) {
         // Fetch from weather API
         include '../includes/fetch_surf_data.php';
-        $message = "Weather data fetched and stored successfully.";
+        $result = fetchAndStoreSurfData();
+        if ($result) {
+            $_SESSION['success_message'] = "Weather data fetched and stored successfully. 14 days of forecast data is now available.";
+        } else {
+            $_SESSION['error_message'] = "There was an error fetching weather data. Please check the error logs.";
+        }
     } elseif (isset($_FILES['csv_file'])) {
         // Handle CSV upload
         $file = $_FILES['csv_file']['tmp_name'];
@@ -143,11 +148,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                                 <div>
                                     <h5 class="mb-1">Automatic Update</h5>
-                                    <p class="text-muted mb-0">Fetch latest data from our weather service provider</p>
+                                    <p class="text-muted mb-0">Fetch latest data from our weather service provider for the next 14 days</p>
                                 </div>
                             </div>
                             <button type="submit" name="fetch_api" class="btn btn-primary btn-lg w-100 rounded-3">
-                                <i class="fas fa-sync-alt me-2"></i>Fetch Latest Data
+                                <i class="fas fa-sync-alt me-2"></i>Fetch 14-Day Forecast Data
                             </button>
                         </div>
                     </form>

@@ -93,7 +93,7 @@ include '../includes/navbar.php';
                             </div>
                         </div>
                         <div>
-                            <h6 class="card-subtitle text-muted mb-1">Total Investment</h6>
+                            <h6 class="card-subtitle text-muted mb-1">Total Spent on Lessons</h6>
                             <h2 class="card-title mb-0">$<?php echo number_format($total_spent ?? 0, 2); ?></h2>
                         </div>
                     </div>
